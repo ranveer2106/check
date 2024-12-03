@@ -9,6 +9,8 @@ import {
 } from "@material-tailwind/react";
 import { useState } from "react";
 import toast, { Toaster } from "react-hot-toast";
+import axios from 'axios';
+
 
 export default function ProductCard() {
     const [amount, setamount] = useState(2);
@@ -16,17 +18,24 @@ export default function ProductCard() {
     // handlePayment Function
     const handlePayment = async () => {
         try {
-            const res = await fetch(`http://localhost:4000/api/payment/order`, {
-                method: "POST",
-                headers: {
-                    "content-type": "application/json"
-                },
-                body: JSON.stringify({
-                    amount
-                })
-            });
+            // const res = await fetch(`http://localhost:4000/api/payment/order`, {
+            //     method: "POST",
+            //     headers: {
+            //         "content-type": "application/json"
+            //     },
+            //     body: JSON.stringify({
+            //         amount
+            //     })
+            // });
+            const res = await axios.post(
+                `http://localhost:4000/api/payment/order`,  // URL to your backend
+                { amount },  // Request body data, equivalent to body in fetch
+                { 
+                    headers: { "content-type": "application/json" }  // Request headers
+                }
+            );
 
-            const data = await res.json();
+            const data = await res.data;
             console.log(data);
             handlePaymentVerify(data.data)
         } catch (error) {
@@ -37,7 +46,7 @@ export default function ProductCard() {
     // handlePaymentVerify Function
     const handlePaymentVerify = async (data) => {
         const options = {
-            key: "rzp_test_zLMC4qz18kVoX9",
+            key: "rzp_test_lfXfbPqLBLUDQV",
             amount: data.amount,
             currency: data.currency,
             name: "ranvir",
@@ -46,19 +55,22 @@ export default function ProductCard() {
             handler: async (response) => {
                 console.log("response", response)
                 try {
-                    const res = await fetch(`http://localhost:4000/api/payment/verify`, {
-                        method: 'POST',
-                        headers: {
-                            'content-type': 'application/json'
-                        },
-                        body: JSON.stringify({
+
+                    const res = await axios.post(
+                        `http://localhost:4000/api/payment/verify`,  // The API URL
+                        {
                             razorpay_order_id: response.razorpay_order_id,
                             razorpay_payment_id: response.razorpay_payment_id,
                             razorpay_signature: response.razorpay_signature,
-                        })
-                    })
+                        },  // Request body data
+                        {
+                            headers: {
+                                'Content-Type': 'application/json',  // Set the header to JSON
+                            }
+                        }
+                    );
 
-                    const verifyData = await res.json();
+                    const verifyData = await res.data;
 
                     if (verifyData.message) {
                         toast.success(verifyData.message)
